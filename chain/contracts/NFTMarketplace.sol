@@ -35,6 +35,8 @@ contract NFTMarketplace is ReentrancyGuard {
 
     mapping(uint256 => MarketItem) marketItems;
 
+    error UnsupporFetch();
+
     event MarketItemCreated(
         uint indexed id,
         address indexed nftContract,
@@ -271,7 +273,7 @@ contract NFTMarketplace is ReentrancyGuard {
                     ? true
                     : false;
         } else {
-            return false;
+            revert UnsupporFetch();
         }
     }
 }
