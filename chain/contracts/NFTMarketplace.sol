@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
-// adapt and edit from (Nader Dabit): https://github.com/dabit3/polygon-ethereum-nextjs-marketplace/blob/main/contracts/Market.sol
 
 pragma solidity ^0.8.3;
 
@@ -14,7 +13,7 @@ contract NFTMarketplace is ReentrancyGuard {
     Counters.Counter private _itemCounter; // start from 1
     Counters.Counter private _itemSoldCounter;
 
-    address payable public marketOwner;
+    address payable private marketOwner;
 
     uint256 private listingFee = 0.01 ether;
 
@@ -68,6 +67,10 @@ contract NFTMarketplace is ReentrancyGuard {
         marketOwner = payable(msg.sender);
     }
 
+    function getItemCount() external view returns(uint256) {
+        return _itemCounter.current();
+    }
+
     function getListingFee() external view returns (uint) {
         return listingFee;
     }
@@ -107,7 +110,7 @@ contract NFTMarketplace is ReentrancyGuard {
     }
 
     function deleteMarketItem(uint256 ietmId) external nonReentrant {
-        // require(ietmId <= _itemCounter.current(), "id must <= count");
+        require(ietmId <= _itemCounter.current(), "id must <= count");
         require(
             marketItems[ietmId].state == State.Created,
             "Item must be on market"
@@ -134,7 +137,7 @@ contract NFTMarketplace is ReentrancyGuard {
         );
     }
 
-    function createMarketSale(address nftContract, uint256 itemId)
+    function buyMarketItem(address nftContract, uint256 itemId)
         external
         payable
         nonReentrant
@@ -166,5 +169,109 @@ contract NFTMarketplace is ReentrancyGuard {
             price,
             State.Release
         );
+    }
+
+    modifier validPage(uint256 _pageNumber, uint256 _pageSize) {
+        require(_pageNumber > 0 && _pageSize > 0, "Invalid page param");
+        _;
+    }
+
+    function fetchActiveItems(uint256 _pageNumber, uint256 _pageSize)
+        public
+        view
+        validPage(_pageNumber, _pageSize)
+        returns (MarketItem[] memory pageItems, uint256 pageTotalCount)
+    {
+        return fetchHelper(FetchOperation.ActiveItems, _pageNumber, _pageSize);
+    }
+
+    function fetchMyPurchasedItems(uint256 _pageNumber, uint256 _pageSize)
+        public
+        view
+        validPage(_pageNumber, _pageSize)
+        returns (MarketItem[] memory pageItems, uint256 pageTotalCount)
+    {
+        return
+            fetchHelper(
+                FetchOperation.MyPurchasedItems,
+                _pageNumber,
+                _pageSize
+            );
+    }
+
+    function fetchMyCreatedItems(uint256 _pageNumber, uint256 _pageSize)
+        public
+        view
+        validPage(_pageNumber, _pageSize)
+        returns (MarketItem[] memory pageItems, uint256 pageTotalCount)
+    {
+        return
+            fetchHelper(FetchOperation.MyCreatedItems, _pageNumber, _pageSize);
+    }
+
+    enum FetchOperation {
+        ActiveItems,
+        MyPurchasedItems,
+        MyCreatedItems
+    }
+
+    function fetchHelper(
+        FetchOperation _operation,
+        uint256 _pageNumber,
+        uint256 _pageSize
+    ) private view returns (MarketItem[] memory pageItems, uint256 pageTotalCount) {
+        uint256 total = _itemCounter.current();
+
+        uint256 itemCount = 0;
+
+        MarketItem[] memory items = new MarketItem[](total);
+
+        for (uint256 i = 1; i <= total; i++) {
+            if (isCondition(marketItems[i], _operation)) {
+                items[itemCount] = marketItems[i];
+                itemCount++;
+            }
+        }
+
+        if (itemCount < 1) {
+            return (items, 0);
+        }
+
+        uint256 startIndex = (_pageNumber - 1) * _pageSize;
+
+        require(startIndex < itemCount, "Out of bouds of items");
+
+        uint256 endIndex = _pageNumber * _pageSize > itemCount ? itemCount : _pageNumber * _pageSize;
+
+        MarketItem[] memory pageMarketItems = new MarketItem[](endIndex - startIndex);
+        uint256 itemIndex = 0;
+        for (uint256 i = startIndex + 1; i <= endIndex; i++) {
+            pageMarketItems[itemIndex] = marketItems[i];
+            itemIndex++;
+        }
+
+        return (pageMarketItems, itemCount);
+    }
+
+    function isCondition(MarketItem memory item, FetchOperation _operation)
+        private
+        view
+        returns (bool)
+    {
+        if (_operation == FetchOperation.MyCreatedItems) {
+            return
+                (item.seller == msg.sender && item.state != State.Inactive)
+                    ? true
+                    : false;
+        } else if (_operation == FetchOperation.MyPurchasedItems) {
+            return (item.buyer == msg.sender) ? true : false;
+        } else if (_operation == FetchOperation.ActiveItems) {
+            return
+                (item.buyer == address(0) && item.state == State.Created)
+                    ? true
+                    : false;
+        } else {
+            return false;
+        }
     }
 }
