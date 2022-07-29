@@ -65,6 +65,7 @@ contract NFTMarketplace is ReentrancyGuard {
         State state
     );
 
+    // TODO: make contract upgradeable
     constructor() {
         marketOwner = payable(msg.sender);
     }
@@ -196,6 +197,7 @@ contract NFTMarketplace is ReentrancyGuard {
         MyCreatedItems
     }
 
+    // TODO: pagination
     function fetchHelper(FetchOperation _op)
         private
         view
