@@ -42,19 +42,19 @@ export default function ReadNFTMarket(props: Props) {
 
       switch (props.option) {
         case 0:
-          market.fetchActiveItems(1, 10, { from: account }).then((items: any) => {
-            setItems(items["pageItems"])
+          market.fetchActiveItems({ from: account }).then((items: any) => {
+            setItems(items)
           })
           break;
         case 1:
-          market.fetchMyPurchasedItems(1, 10, { from: account }).then((items: any) => {
-            setItems(items["pageItems"])
+          market.fetchMyPurchasedItems({ from: account }).then((items: any) => {
+            setItems(items)
           })
           break;
         case 2:
-          market.fetchMyCreatedItems(1, 10, { from: account }).then((items: any) => {
-            setItems(items["pageItems"])
-            console.log(items["pageItems"])
+          market.fetchMyCreatedItems({ from: account }).then((items: any) => {
+            setItems(items)
+            console.log(items)
           })
           break;
         default:

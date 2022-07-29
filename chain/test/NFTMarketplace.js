@@ -34,8 +34,8 @@ describe("NFTMarketplace", function () {
     await market.createMarketItem(nft.address, 1, auctionPrice, { value: listingFee })
     expect(await market.getItemCount()).to.be.equal(1)
 
-    const pageResult = await market.fetchMyCreatedItems(1, 2)
-    expect(pageResult["pageTotalCount"]).to.be.equal(1)
+    const pageResult = await market.fetchMyCreatedItems()
+    expect(pageResult.length).to.be.equal(1)
   })
 
   it("Should create market item with EVENT", async function () {

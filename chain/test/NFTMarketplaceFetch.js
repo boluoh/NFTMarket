@@ -45,56 +45,46 @@ describe("NFTMarketplace Fetch functions", function () {
   })
 
   it("Should fetchActiveItems correctly", async function() {
-    const pageResult = await market.fetchActiveItems(1,10)
-    expect(pageResult["pageTotalCount"]).to.be.equal(6)
+    const items = await market.fetchActiveItems()
+    expect(items.length).to.be.equal(6)
   })  
 
-  it("Should fetchActiveItems page correctly", async function() {
-    const pageResult = await market.fetchActiveItems(2,4)
-    expect(pageResult["pageTotalCount"]).to.be.equal(6)
-    expect(pageResult["pageItems"].length).to.be.equal(2)
-  })
-
-  it("Should fetchActiveItems revert by uncorrect pageParam", async function() {
-    await expect(market.fetchActiveItems(2,7)).to.be.revertedWith("Out of bouds of items")
-  })
-
   it("Should fetchMyCreatedItems correctly", async function() {
-    const pageResult = await market.fetchMyCreatedItems(1,10)
-    expect(pageResult["pageTotalCount"]).to.be.equal(6)
+    const items = await market.fetchMyCreatedItems()
+    expect(items.length).to.be.equal(6)
 
     //should delete correctly
     await market.deleteMarketItem(1)
-    const newPageResult = await market.fetchMyCreatedItems(1,10)
-    expect(newPageResult["pageTotalCount"]).to.be.equal(5)
+    const newPageResult = await market.fetchMyCreatedItems()
+    expect(newPageResult.length).to.be.equal(5)
   })
 
   it("Should fetchMyPurchasedItems correctly", async function() {
-    const pageResult = await market.fetchMyPurchasedItems(1, 10)
-    expect(pageResult["pageTotalCount"]).to.be.equal(0)
+    const pageResult = await market.fetchMyPurchasedItems()
+    expect(pageResult.length).to.be.equal(0)
   })
 
   it("Should fetchActiveItems with correct return values", async function() {
-    const pageResult = await market.fetchActiveItems(1,10)
+    const pageResult = await market.fetchActiveItems()
 
-    expect(pageResult["pageItems"][0].id).to.be.equal(ethers.BigNumber.from(1))
-    expect(pageResult["pageItems"][0].nftContract).to.be.equal(nft.address)
-    expect(pageResult["pageItems"][0].tokenId).to.be.equal(ethers.BigNumber.from(1))
-    expect(pageResult["pageItems"][0].seller).to.be.equal(address0)
-    expect(pageResult["pageItems"][0].buyer).to.be.equal(ethers.constants.AddressZero)
-    expect(pageResult["pageItems"][0].state).to.be.equal(0)//enum State.Created
+    expect(pageResult[0].id).to.be.equal(ethers.BigNumber.from(1))
+    expect(pageResult[0].nftContract).to.be.equal(nft.address)
+    expect(pageResult[0].tokenId).to.be.equal(ethers.BigNumber.from(1))
+    expect(pageResult[0].seller).to.be.equal(address0)
+    expect(pageResult[0].buyer).to.be.equal(ethers.constants.AddressZero)
+    expect(pageResult[0].state).to.be.equal(0)//enum State.Created
   }) 
 
   it("Should fetchMyPurchasedItems with correct return values", async function() {
     await market.connect(account1).buyMarketItem(nft.address, 1, { value: auctionPrice})
-    const pageResult = await market.connect(account1).fetchMyPurchasedItems(1,10)
+    const pageResult = await market.connect(account1).fetchMyPurchasedItems()
 
-    expect(pageResult["pageItems"][0].id).to.be.equal(ethers.BigNumber.from(1))
-    expect(pageResult["pageItems"][0].nftContract).to.be.equal(nft.address)
-    expect(pageResult["pageItems"][0].tokenId).to.be.equal(ethers.BigNumber.from(1))
-    expect(pageResult["pageItems"][0].seller).to.be.equal(address0)
-    expect(pageResult["pageItems"][0].buyer).to.be.equal(address1)//address#1
-    expect(pageResult["pageItems"][0].state).to.be.equal(1)//enum State.Release
+    expect(pageResult[0].id).to.be.equal(ethers.BigNumber.from(1))
+    expect(pageResult[0].nftContract).to.be.equal(nft.address)
+    expect(pageResult[0].tokenId).to.be.equal(ethers.BigNumber.from(1))
+    expect(pageResult[0].seller).to.be.equal(address0)
+    expect(pageResult[0].buyer).to.be.equal(address1)//address#1
+    expect(pageResult[0].state).to.be.equal(1)//enum State.Release
 
   })    
 

@@ -69,7 +69,7 @@ contract NFTMarketplace is ReentrancyGuard {
         marketOwner = payable(msg.sender);
     }
 
-    function getItemCount() external view returns(uint256) {
+    function getItemCount() external view returns (uint256) {
         return _itemCounter.current();
     }
 
@@ -81,7 +81,7 @@ contract NFTMarketplace is ReentrancyGuard {
         address nftContract,
         uint256 tokenId,
         uint256 price
-    ) external payable nonReentrant {
+    ) public payable nonReentrant {
         require(msg.value == listingFee, "Fee must be equal to listing fee");
         require(
             IERC721(nftContract).getApproved(tokenId) == address(this),
@@ -111,7 +111,7 @@ contract NFTMarketplace is ReentrancyGuard {
         );
     }
 
-    function deleteMarketItem(uint256 ietmId) external nonReentrant {
+    function deleteMarketItem(uint256 ietmId) public nonReentrant {
         require(ietmId <= _itemCounter.current(), "id must <= count");
         require(
             marketItems[ietmId].state == State.Created,
@@ -140,7 +140,7 @@ contract NFTMarketplace is ReentrancyGuard {
     }
 
     function buyMarketItem(address nftContract, uint256 itemId)
-        external
+        public
         payable
         nonReentrant
     {
@@ -178,37 +178,16 @@ contract NFTMarketplace is ReentrancyGuard {
         _;
     }
 
-    function fetchActiveItems(uint256 _pageNumber, uint256 _pageSize)
-        public
-        view
-        validPage(_pageNumber, _pageSize)
-        returns (MarketItem[] memory pageItems, uint256 pageTotalCount)
-    {
-        return fetchHelper(FetchOperation.ActiveItems, _pageNumber, _pageSize);
+    function fetchActiveItems() public view returns (MarketItem[] memory) {
+        return fetchHelper(FetchOperation.ActiveItems);
     }
 
-    function fetchMyPurchasedItems(uint256 _pageNumber, uint256 _pageSize)
-        public
-        view
-        validPage(_pageNumber, _pageSize)
-        returns (MarketItem[] memory pageItems, uint256 pageTotalCount)
-    {
-        return
-            fetchHelper(
-                FetchOperation.MyPurchasedItems,
-                _pageNumber,
-                _pageSize
-            );
+    function fetchMyPurchasedItems() public view returns (MarketItem[] memory) {
+        return fetchHelper(FetchOperation.MyPurchasedItems);
     }
 
-    function fetchMyCreatedItems(uint256 _pageNumber, uint256 _pageSize)
-        public
-        view
-        validPage(_pageNumber, _pageSize)
-        returns (MarketItem[] memory pageItems, uint256 pageTotalCount)
-    {
-        return
-            fetchHelper(FetchOperation.MyCreatedItems, _pageNumber, _pageSize);
+    function fetchMyCreatedItems() public view returns (MarketItem[] memory) {
+        return fetchHelper(FetchOperation.MyCreatedItems);
     }
 
     enum FetchOperation {
@@ -217,42 +196,29 @@ contract NFTMarketplace is ReentrancyGuard {
         MyCreatedItems
     }
 
-    function fetchHelper(
-        FetchOperation _operation,
-        uint256 _pageNumber,
-        uint256 _pageSize
-    ) private view returns (MarketItem[] memory pageItems, uint256 pageTotalCount) {
-        uint256 total = _itemCounter.current();
+    function fetchHelper(FetchOperation _op)
+        private
+        view
+        returns (MarketItem[] memory)
+    {
+        uint total = _itemCounter.current();
 
-        uint256 itemCount = 0;
-
-        MarketItem[] memory items = new MarketItem[](total);
-
-        for (uint256 i = 1; i <= total; i++) {
-            if (isCondition(marketItems[i], _operation)) {
-                items[itemCount] = marketItems[i];
+        uint itemCount = 0;
+        for (uint i = 1; i <= total; i++) {
+            if (isCondition(marketItems[i], _op)) {
                 itemCount++;
             }
         }
 
-        if (itemCount < 1) {
-            return (items, 0);
+        uint index = 0;
+        MarketItem[] memory items = new MarketItem[](itemCount);
+        for (uint i = 1; i <= total; i++) {
+            if (isCondition(marketItems[i], _op)) {
+                items[index] = marketItems[i];
+                index++;
+            }
         }
-
-        uint256 startIndex = (_pageNumber - 1) * _pageSize;
-
-        require(startIndex < itemCount, "Out of bouds of items");
-
-        uint256 endIndex = _pageNumber * _pageSize > itemCount ? itemCount : _pageNumber * _pageSize;
-
-        MarketItem[] memory pageMarketItems = new MarketItem[](endIndex - startIndex);
-        uint256 itemIndex = 0;
-        for (uint256 i = startIndex + 1; i <= endIndex; i++) {
-            pageMarketItems[itemIndex] = marketItems[i];
-            itemIndex++;
-        }
-
-        return (pageMarketItems, itemCount);
+        return items;
     }
 
     function isCondition(MarketItem memory item, FetchOperation _operation)
