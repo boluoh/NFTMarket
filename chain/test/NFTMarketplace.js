@@ -1,5 +1,5 @@
 const { expect } = require("chai")
-const { ethers } = require("hardhat")
+const { ethers, upgrades } = require("hardhat")
 
 const _name = 'BadgeToken'
 const _symbol = 'BADGE'
@@ -7,6 +7,8 @@ const _symbol = 'BADGE'
 describe("NFTMarketplace", function () {
   let nft
   let market
+  let ProxyAdmin
+  let TransparentUpgradeableProxy 
   let account0, account1, account2
   let address0, address1, address2
 
@@ -22,9 +24,45 @@ describe("NFTMarketplace", function () {
     const BadgeToken = await ethers.getContractFactory("BadgeToken")
     nft = await BadgeToken.deploy(_name, _symbol)
 
-    const Market = await ethers.getContractFactory("NFTMarketplace")
-    market = await Market.deploy()
+    const NFTMarketplace = await ethers.getContractFactory("NFTMarketplace");
+
+    market = await upgrades.deployProxy(NFTMarketplace, [], { initializer: 'initialize' })
+
+    // console.log(market.address," NFTMarket Contract Address")
+
+    // console.log(market.address, " market(proxy) address")
+    // TransparentUpgradeableProxy = await upgrades.erc1967.getImplementationAddress(market.address);
+    // console.log(TransparentUpgradeableProxy," getImplementationAddress")
+
+    // ProxyAdmin = await upgrades.erc1967.getAdminAddress(market.address);
+    // console.log(ProxyAdmin, " getAdminAddress")
+
+    // const Market = await ethers.getContractFactory("NFTMarketplace")
+    // market = await Market.deploy()
     listingFee = await market.getListingFee()
+
+  })
+
+  it("Should upgrade market version successfully", async function () {
+
+    await nft.mintTo(address0)  //tokenId=1
+    await nft.approve(market.address, 1)
+    await market.createMarketItem(nft.address, 1, auctionPrice, { value: listingFee })
+    expect(await market.getItemCount()).to.be.equal(1)
+
+    const pageResult = await market.fetchMyCreatedItems()
+    expect(pageResult.length).to.be.equal(1)
+
+    const MarketV2 = await ethers.getContractFactory("NFTMarketplaceV2");
+    const marketV2 = await upgrades.upgradeProxy(market.address, MarketV2);
+    marketV2.attach(market.address)
+    marketV2.changeOwner(address2)
+    // console.log(marketV2.getOwner())
+    expect(await marketV2.marketOwner()).to.be.equal(address2)
+    console.log(market.address)
+    console.log(marketV2.address)
+    const pageResultV2 = await marketV2.fetchMyCreatedItems()
+    expect(pageResultV2.length).to.be.equal(1)
 
   })
 

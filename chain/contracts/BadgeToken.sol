@@ -14,7 +14,7 @@ contract BadgeToken is ERC721 {
 
     function mintTo(address _to) public {
         uint256 newTokenId = _getNextTokenId();
-        super._safeMint(_to, newTokenId);
+        super._mint(_to, newTokenId);
         _incrementTokenId();
     }
 

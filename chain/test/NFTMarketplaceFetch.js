@@ -1,5 +1,5 @@
 const { expect } = require("chai")
-const { ethers } = require("hardhat")
+const { ethers, upgrades } = require("hardhat")
 
 const _name = 'BadgeToken'
 const _symbol = 'BADGE'
@@ -23,8 +23,17 @@ describe("NFTMarketplace Fetch functions", function () {
     nft = await BadgeToken.deploy(_name,_symbol)
     // tokenAddress = nft.address
 
-    const Market = await ethers.getContractFactory("NFTMarketplace")
-    market = await Market.deploy()
+    console.log("Account balance:", (await account0.getBalance()).toString());
+
+    const NFTMarketplace = await ethers.getContractFactory("NFTMarketplace");
+    console.log("Deploying NFTMarketplace...")
+
+    market = await upgrades.deployProxy(NFTMarketplace, [], { initializer: 'initialize' })
+
+    // console.log(market.address, " market(proxy) address")
+    // console.log(await upgrades.erc1967.getImplementationAddress(market.address)," getImplementationAddress")
+    // console.log(await upgrades.erc1967.getAdminAddress(market.address), " getAdminAddress")
+
     listingFee = await market.getListingFee()
 
     // console.log("1. == mint 1-6 to account#0")

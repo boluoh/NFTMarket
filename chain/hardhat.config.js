@@ -1,4 +1,5 @@
 require("@nomicfoundation/hardhat-toolbox");
+require('@openzeppelin/hardhat-upgrades');
 
 const INFURA_PROJECT_ID = "YOUR INFURA PROJECT ID";
 

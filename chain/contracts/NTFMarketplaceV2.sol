@@ -8,7 +8,7 @@ import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
-contract NFTMarketplace is Initializable, ReentrancyGuardUpgradeable {
+contract NFTMarketplaceV2 is Initializable, ReentrancyGuardUpgradeable {
     using Counters for Counters.Counter;
 
     Counters.Counter private _itemCounter; // start from 1
@@ -265,4 +265,9 @@ contract NFTMarketplace is Initializable, ReentrancyGuardUpgradeable {
             revert UnsupporFetch();
         }
     }
+
+    function changeOwner(address newOwner) public onlyMarketOwner {
+        marketOwner = payable(newOwner);
+    }
+
 }
